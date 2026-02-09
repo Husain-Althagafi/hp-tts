@@ -4,11 +4,9 @@ import time
 import torch
 import numpy as np
 
-def build_vad(sampling_rate:int = 16000, device='cuda'):
+def build_vad(device='cuda'):
     vadmodel = load_silero_vad()
-    vad_iter = VADIterator(model=vadmodel, sampling_rate=sampling_rate)
-
-    return vadmodel.to(device), vad_iter
+    return vadmodel.to(device)
 
 
 def record_one_utterance(vadmodel, start_threshold=0.5, end_silence_ms=800, max_utterance_s=12.0, frame_samples=None, sample_rate=None):
