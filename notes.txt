@@ -1,0 +1,34 @@
+real-time agent that can interact with users. preferably in arabic but im not locked into that
+
+basic architecture on the ai side
+
+user speech -> stt model -> llm -> tts model -> back to user
+
+
+- can make it fairly interactive if i make it so that the bot can be interrupted (prlly outside the scope)
+
+
+
+first thing to implement is a fully working pipeline
+
+- baseline can be done with open-source models
+
+
+scope of baseline mvp stage 1
+
+- flow: start script -> user speaks -> automatic speech recognition starts pipeline -> stt -> llm response -> tts -> yay
+
+
+
+
+
+
+
+things to think about implementing:
+
+- evaluation harness
+- tooling
+- more interactive somehow
+- lower latency
+- rag 
+- specific use-case
