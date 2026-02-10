@@ -4,6 +4,7 @@ import sounddevice as sd
 from stt_model import STTModel
 from vad import build_vad, record_one_utterance
 from llm_responder import build_llm_and_tokenizer, use_chat_template, full_generation
+from tts_model import TTSModel
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -67,27 +68,33 @@ def main():
         if ARGS.llm == 'api':
             print(f'Making llm api request...')
             client = build_llm_and_tokenizer(ARGS.llm)
+
             print(f'Generating LLM response...')
-            response = client.models.generate(
-                model='gemini-3-flash-preview',
-                contents = f'Respond to this in a conversational manner: {transcription}'
+            response = client.models.generate_content(
+                model="gemini-3-flash-preview",
+                contents=f"{transcription}",
             ).text
-            
+                
         else:    
             print(f'Loading LLM and tokenizer...')
             llm, llm_tokenizer = build_llm_and_tokenizer(ARGS.llm)
-            print(f'LLM and tokenizer loaded...')
 
             print(f'Applying chat template...')
             text = use_chat_template(llm_tokenizer, transcription)
+
             print(f'Generating LLM response...')
             response = full_generation(llm, llm_tokenizer, text, ARGS.device, ARGS.max_new_tokens)
 
         print(f'LLM response: {response}')
 
-        #tts part
-
-        
+        #   ---TTS---
+        print(f'Beginning Text-to-Speech...')
+        ttsmodel = TTSModel()
+        ttsmodel.synthesize_to_file(text=response)
+        print(f'Streaming...')
+        for chunk in ttsmodel.stream_chunks(response):
+            sd.play(chunk)
+            sd.wait()
 
 if __name__ == '__main__':
     global ARGS

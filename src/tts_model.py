@@ -2,7 +2,9 @@ from kokoro import KPipeline
 from kokoro.model import KModel
 import soundfile as sf
 import os
-
+import numpy as np
+import sounddevice as sd
+import time
 
 class TTSModel:
     def __init__(self, model_name:str = 'kokoro', device='cuda'):
@@ -13,11 +15,31 @@ class TTSModel:
             self.model = KPipeline(model=kmodel, lang_code='a') # american english
     
 
-    def generate_file(self, text):
-        generator = self.model(text, voice='af_heart')
-        for i, (gs, ps, audio) in enumerate(generator):
-            print(i, gs, ps)
-            sf.write(f'{i}.wav', audio, 24000)
+    def synthesize(self, text, voice='af_heart'):
+        chunks = []
+
+        generator = self.model(text, voice=voice)
+        for _, _, audio in generator:
+            audio = np.asarray(audio, dtype=np.float32)
+            chunks.append(audio)
+
+        if not chunks:
+            raise RuntimeError(f'TTS produced no audio')
+        
+        full_audio = np.concatenate(chunks)
+        return full_audio
+    
+
+    def synthesize_to_file(self, text, voice='af_heart', output_path=f'outputs/audios/{time.time()}.wav'):
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        audio = self.synthesize(text, voice=voice)
+        sf.write(output_path, audio, samplerate=10000000)
+
+    
+    def stream_chunks(self, text, voice='af_heart'):
+        generator = self.model(text, voice=voice)
+        for _, _, audio in generator:
+            yield np.asarray(audio, dtype=np.float32)
 
 
     def load_kmodel_local(self, model_dir: str, device: str = "cuda"):
@@ -62,5 +84,18 @@ class TTSModel:
         
 if __name__ == '__main__':
     tts = TTSModel()
-    tts.generate_file('Hello my name is husain')
-    print(f'Generating audio file')
+    # txt = input(f'Enter your message to tts: ')
+    txt = 'Hi, my name is Mario and I like pizza!'
+    tts.synthesize_to_file(txt)
+    print(f'Generating audio file...')
+
+    print(f'Playing tts audio...')
+    audio = tts.synthesize(txt)
+    sd.play(audio)
+    sd.wait()
+
+    print(f'Streaming tts audio...')
+    for chunk in tts.stream_chunks(txt):
+        sd.play(chunk)
+        sd.wait()
+
