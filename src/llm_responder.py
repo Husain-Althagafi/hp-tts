@@ -26,3 +26,17 @@ def use_chat_template(tokenizer, prompt:str = 'Hi, I like cats'):
     )
 
     return text
+
+
+def full_generation(model, tokenizer, text, device, max_new_tokens):
+    model_inputs = tokenizer([text], return_tensors='pt').to(device)
+
+    generated_ids = model.generate(
+        **model_inputs,
+        max_new_tokens=max_new_tokens
+    )
+
+    output_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)]
+    response = model.batch_decode(output_ids, skip_special_tokens=True)[0]
+    return response
+

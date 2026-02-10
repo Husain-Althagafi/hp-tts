@@ -3,7 +3,7 @@ import sounddevice as sd
 
 from stt_model import STTModel
 from vad import build_vad, record_one_utterance
-from llm_responder import build_llm_and_tokenizer, use_chat_template
+from llm_responder import build_llm_and_tokenizer, use_chat_template, full_generation
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -65,8 +65,9 @@ def main():
         print(f'Transcription complete...\nTranscriped audio: {transcription}')
     
         if ARGS.llm == 'api':
-            print(f'Making api request...')
+            print(f'Making llm api request...')
             client = build_llm_and_tokenizer(ARGS.llm)
+            print(f'Generating LLM response...')
             response = client.models.generate(
                 model='gemini-3-flash-preview',
                 contents = f'Respond to this in a conversational manner: {transcription}'
@@ -77,22 +78,16 @@ def main():
             llm, llm_tokenizer = build_llm_and_tokenizer(ARGS.llm)
             print(f'LLM and tokenizer loaded...')
 
-            print(f'Generating LLM response...')
+            print(f'Applying chat template...')
             text = use_chat_template(llm_tokenizer, transcription)
-            model_inputs = llm_tokenizer([text], return_tensors='pt').to(ARGS.device)
+            print(f'Generating LLM response...')
+            response = full_generation(llm, llm_tokenizer, text, ARGS.device, ARGS.max_new_tokens)
 
-            generated_ids = llm.generate(
-                **model_inputs,
-                max_new_tokens=ARGS.max_new_tokens
-            )
-
-            generated_ids = [
-                output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-            ]
-
-            response = llm_tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
         print(f'LLM response: {response}')
 
+        #tts part
+
+        
 
 if __name__ == '__main__':
     global ARGS
