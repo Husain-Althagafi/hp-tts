@@ -11,8 +11,8 @@ class STTModel:
     
     def process_features(self, sample, return_tensors='pt'):
         processed_features = self.processor(
-            sample['array'],
-            sampling_rate=sample['sampling_rate'],
+            sample,
+            sampling_rate=16000,
             return_tensors=return_tensors
         ).input_features
 

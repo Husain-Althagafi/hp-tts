@@ -1,7 +1,9 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
+from google import genai
 
 def build_llm_and_tokenizer(model_name:str = 'Qwen/Qwen2.5-7B-Instruct'):
+    if model_name == 'api':
+        return genai.Client()
     return AutoModelForCausalLM.from_pretrained(model_name, torch_dtype='auto', device_map='cuda'), AutoTokenizer.from_pretrained(model_name)
 
 

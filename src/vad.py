@@ -1,4 +1,4 @@
-from silero_vad import load_silero_vad, read_audio, get_speech_timestamps, VADIterator
+from silero_vad import load_silero_vad
 import sounddevice as sd
 import time
 import torch
@@ -9,7 +9,7 @@ def build_vad(device='cuda'):
     return vadmodel.to(device)
 
 
-def record_one_utterance(vadmodel, start_threshold=0.5, end_silence_ms=800, max_utterance_s=12.0, frame_samples=None, sample_rate=None):
+def record_one_utterance(vadmodel, start_threshold=0.5, end_silence_ms=800, max_utterance_s=12.0, frame_samples=None, sample_rate=None, device='cuda'):
     t0 = time.time()
 
     frames = []
@@ -22,8 +22,9 @@ def record_one_utterance(vadmodel, start_threshold=0.5, end_silence_ms=800, max_
             data, _ = stream.read(frame_samples)   # data.shape = (frames, channels) in this case (frame_samples, 1)
             data = data[:, 0]
             frames.append(data)
+            data = torch.from_numpy(data).float().unsqueeze(0).to(device)
 
-            probs = vadmodel(torch.from_numpy(data), sample_rate).item()
+            probs = vadmodel(data, sample_rate).item()
 
             if not started:    
                 if probs >= start_threshold:
