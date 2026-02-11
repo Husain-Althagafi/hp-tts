@@ -9,7 +9,7 @@ def build_vad(device='cuda'):
     return vadmodel.to(device)
 
 
-def record_one_utterance(vadmodel, start_threshold=0.5, end_silence_ms=800, max_utterance_s=12.0, frame_samples=None, sample_rate=None, device='cuda'):
+def record_one_utterance(vadmodel, start_threshold=0.5, end_silence_ms=1000, max_utterance_s=12.0, frame_samples=None, sample_rate=None, device='cuda'):
     t0 = time.time()
 
     frames = []
