@@ -5,6 +5,10 @@ import os
 import numpy as np
 import sounddevice as sd
 import time
+from transformers import AutoTokenizer, VitsModel
+import torch
+from sample_texts import arabic_tts_test_sentences
+from tts_pipeline import normalize_nums
 
 class TTSModel:
     def __init__(self, model_name:str = 'kokoro', device='cuda'):
@@ -13,9 +17,27 @@ class TTSModel:
             kmodel = self.load_kmodel_local(model_path)
             print(f'model loaded yay')
             self.model = KPipeline(model=kmodel, lang_code='a') # american english
-    
+            self.model_type = 'kokoro'
+            self.model_rate = 24000
+
+        if 'facebook' in model_name:
+            self.model = VitsModel.from_pretrained(model_name).to(device)
+            self.model.eval()
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.model_type = 'facebook'
+            self.model_rate = 16000
 
     def synthesize(self, text, voice='af_heart'):
+        text = normalize_nums(text)
+        if self.model_type == 'facebook':
+            ids = self.tokenizer(text, return_tensors='pt').to(self.model.device)   
+
+            with torch.inference_mode():
+                output = self.model(
+                    **ids,
+                ).waveform
+                return output.squeeze().cpu().numpy()
+        
         chunks = []
 
         generator = self.model(text, voice=voice)
@@ -27,16 +49,22 @@ class TTSModel:
             raise RuntimeError(f'TTS produced no audio')
         
         full_audio = np.concatenate(chunks)
-        return full_audio
+        return full_audio #if full_audio is not None else np.array()
     
 
     def synthesize_to_file(self, text, voice='af_heart', output_path=f'outputs/audios/{time.time()}.wav'):
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         audio = self.synthesize(text, voice=voice)
-        sf.write(output_path, audio, samplerate=10000000)
+        if self.model_type == 'kokoro':
+            sf.write(output_path, audio, samplerate=self.model_rate)
+        elif self.model_type == 'facebook':
+            sf.write(output_path, audio, samplerate=self.model_rate)
 
     
     def stream_chunks(self, text, voice='af_heart'):
+        text = normalize_nums(text)
+        if self.model_type == 'facebook':
+            raise Exception(f'Cant stream outputs with modeltype {self.model_type}')
         generator = self.model(text, voice=voice)
         for _, _, audio in generator:
             yield np.asarray(audio, dtype=np.float32)
@@ -81,21 +109,34 @@ class TTSModel:
                 pass
 
         return kmodel
+    
+
+        
         
 if __name__ == '__main__':
-    tts = TTSModel()
-    # txt = input(f'Enter your message to tts: ')
-    txt = 'Hi, my name is Mario and I like pizza!'
-    tts.synthesize_to_file(txt)
-    print(f'Generating audio file...')
+    tts = TTSModel(model_name='facebook/mms-tts-ara')
+    # tts = TTSModel()
+    # txt = 'Hi, my name is Mario and I like pizza!'
+    i, e, s = 0, -1, 5
+    txts = arabic_tts_test_sentences[i:e:s]
+    for txt in txts:
+        print(f'Playing tts audio...')
+        audio = tts.synthesize(txt)
+        if tts.model_type == 'facebook':
+            sd.play(audio, samplerate=tts.model_rate)
+            sd.wait()
 
-    print(f'Playing tts audio...')
-    audio = tts.synthesize(txt)
-    sd.play(audio)
-    sd.wait()
+        elif tts.model_type == 'kokoro':
+            sd.play(audio, samplerate=tts.model_rate)
+            sd.wait()
 
-    print(f'Streaming tts audio...')
-    for chunk in tts.stream_chunks(txt):
-        sd.play(chunk)
-        sd.wait()
+            print(f'Streaming tts audio...')
+            for chunk in tts.stream_chunks(txt):
+                sd.play(chunk)
+                sd.wait()
+
+        tts.synthesize_to_file(txt)
+        print(f'Generating audio file...')
+
+    
 

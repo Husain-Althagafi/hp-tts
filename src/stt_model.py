@@ -2,11 +2,14 @@ from transformers import WhisperProcessor, WhisperForConditionalGeneration
 import torch
 
 class STTModel:
-    def __init__(self, model_name:str = 'openai/whisper-small', device:str ='cuda'):
+    def __init__(self, language:str, model_name:str = 'openai/whisper-small', task:str = 'transcribe', device:str = 'cuda'):
         self.device = device
-        self.processor = WhisperProcessor.from_pretrained(model_name)
-        self.generator = WhisperForConditionalGeneration.from_pretrained(model_name).to(self.device)
-        self.generator.eval()
+        if 'whisper' in model_name:
+            self.processor = WhisperProcessor.from_pretrained(model_name)
+
+            self.generator = WhisperForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float32).to(self.device)
+            self.generator.config.forced_decoder_ids = self.processor.get_decoder_prompt_ids(language=language, task=task)
+            self.generator.eval()
 
     
     def process_features(self, sample, return_tensors='pt'):
@@ -41,4 +44,8 @@ class STTModel:
 
         return transcription
         
+
+if __name__ == '__main__':
+    sttmodel = STTModel(language='ar')
+    
 

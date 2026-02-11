@@ -2,7 +2,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import google.genai as genai
 
 
-def build_llm_and_tokenizer(model_name:str = 'Qwen/Qwen2.5-7B-Instruct'):
+def build_llm_and_tokenizer(model_name:str = 'Qwen2.5-7B-Instruct'):
     if model_name == 'api':
         return genai.Client()
 
@@ -39,6 +39,6 @@ def full_generation(model, tokenizer, text, device, max_new_tokens):
     )
 
     output_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)]
-    response = model.batch_decode(output_ids, skip_special_tokens=True)[0]
+    response = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0]
     return response
 

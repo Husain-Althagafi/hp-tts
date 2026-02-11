@@ -42,9 +42,27 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--sttmodel',
+        type=str,
+        default='openai/whisper-small'
+    )
+
+    parser.add_argument(
+        '--ttsmodel',
+        type=str,
+        default='kokoro'
+    )
+
+    parser.add_argument(
         '--max_new_tokens',
         type=int,
         default=256
+    )
+
+    parser.add_argument(
+        '--language',
+        type=str,
+        default='english'
     )
 
     return parser.parse_args()
@@ -52,16 +70,16 @@ def parse_args():
 
 def main():
     #   instantiate models
-    sttmodel = STTModel(device=ARGS.device)
+    sttmodel = STTModel(model_name=ARGS.sttmodel, device=ARGS.device, language=ARGS.language)
     vadmodel = build_vad(device=ARGS.device)
-    ttsmodel = TTSModel()
+    ttsmodel = TTSModel(model_name=ARGS.ttsmodel)
 
     if ARGS.llm == 'api':
                 print(f'Making llm api request...')
                 client = build_llm_and_tokenizer(ARGS.llm)
     else:
         print(f'Loading LLM and tokenizer...')
-        llm, llm_tokenizer = build_llm_and_tokenizer(ARGS.llm)
+        llm, llm_tokenizer = build_llm_and_tokenizer(ARGS.llm   )
     
     
     sd.default.samplerate = ARGS.sampling_rate   # set default sample rate to 16,000
@@ -94,6 +112,7 @@ def main():
         current_time = time.time()
         transcription = sttmodel.transcribe(audio) 
         print(f'Transcription complete...\nTranscriped audio: {transcription}')
+
         current_time_diff = time.time() - current_time
         current_time += current_time_diff
         print(f'Transcription time: {current_time_diff}')
@@ -126,15 +145,38 @@ def main():
         print(f'Beginning Text-to-Speech...')
         stop_tts_event.clear()
         is_tts_playing.set()
+        if ttsmodel.model_type != 'facebook':
+            print(f'Streaming...')
+            for chunk in ttsmodel.stream_chunks(response):
+                if stop_tts_event.is_set():
+                    print("Stopping TTS")
+                    sd.stop()
+                    break
 
-        print(f'Streaming...')
-        for chunk in ttsmodel.stream_chunks(response):
+                sd.play(chunk, samplerate=ttsmodel.model_rate)
+
+                # Instead of sd.wait(), poll in small intervals
+                while sd.get_stream().active:
+                    if stop_tts_event.is_set():
+                        print("Stopping TTS mid-chunk")
+                        sd.stop()
+                        break
+                    sd.sleep(20)
+
+                if stop_tts_event.is_set():
+                    break
+
+            is_tts_playing.clear()
+        
+        else:
+            print(f'Playing audio...')
+            chunk = ttsmodel.synthesize(response)
             if stop_tts_event.is_set():
                 print("Stopping TTS")
                 sd.stop()
                 break
 
-            sd.play(chunk, samplerate=24000)
+            sd.play(chunk, samplerate=ttsmodel.model_rate)
 
             # Instead of sd.wait(), poll in small intervals
             while sd.get_stream().active:
@@ -147,7 +189,8 @@ def main():
             if stop_tts_event.is_set():
                 break
 
-        is_tts_playing.clear()
+            is_tts_playing.clear()
+            
 
 if __name__ == '__main__':
     global ARGS
