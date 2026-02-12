@@ -1,5 +1,8 @@
 import sounddevice as sd
 import threading
+import numpy as np
+import tempfile
+import soundfile as sf
 
 from stt_model import STTModel
 from vad import build_vad, record_one_utterance
@@ -155,6 +158,47 @@ class VoicePipeline:
         return transcription, llmresponse, sttaudio
     
 
+    def run_turn_from_gradio_audio(self, mic_audio):
+        """
+        mic_audio is usually (sample_rate, np.ndarray) from gr.Audio(type="numpy")
+        Returns: transcription, response, wav_path
+        """
+        if mic_audio is None:
+            return "", "", None
+
+        sr, audio = mic_audio
+
+        audio = np.asarray(audio, dtype=np.float32)
+        if audio.ndim > 1:
+            audio = audio[:, 0]  # mono
+
+        # Whisper expects 16k
+        audio_16k = self._linear_resample(audio, sr, 16000)
+
+        transcription = self.sttmodel.transcribe(audio_16k)
+        if transcription.lower().strip() == "exit":
+            return transcription, "", None
+
+        response = self.run_llm(transcription)
+
+        # Get TTS waveform (you already have ttsmodel.synthesize)
+        tts_wav = self.ttsmodel.synthesize(response).astype(np.float32)
+        tts_sr = self.ttsmodel.model_rate
+
+        # Write to temp wav for Gradio to play
+        outpath = tempfile.mkstemp(suffix=".wav")
+        sf.write(outpath, tts_wav, tts_sr)
+
+        return transcription, response, outpath
+        
+
+    def _linear_resample(audio: np.ndarray, sr_in: int, sr_out: int) -> np.ndarray:
+        if sr_in == sr_out:
+            return audio.astype(np.float32)
+        x_old = np.linspace(0.0, 1.0, num=len(audio), endpoint=False)
+        n_new = int(len(audio) * (sr_out / sr_in))
+        x_new = np.linspace(0.0, 1.0, num=n_new, endpoint=False)
+        return np.interp(x_new, x_old, audio).astype(np.float32)
 
 
 if __name__ == '__main__':
