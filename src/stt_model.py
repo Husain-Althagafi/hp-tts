@@ -22,7 +22,7 @@ class STTModel:
         return processed_features.to(self.device)
 
 
-    def generate(self, input_features):
+    def generate_ids(self, input_features):
         with torch.inference_mode():
             pred_ids = self.generator.generate(input_features)
             return pred_ids
@@ -39,7 +39,7 @@ class STTModel:
 
     def transcribe(self, sample, return_tensors='pt', skip_special_tokens=True):
         features = self.process_features(sample, return_tensors)
-        pred_ids = self.generate(features)
+        pred_ids = self.generate_ids(features)
         transcription = self.decode(pred_ids, skip_special_tokens)
 
         return transcription

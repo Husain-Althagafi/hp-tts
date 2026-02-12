@@ -20,8 +20,20 @@ scope of baseline mvp stage 1
 
 
 
+fully working baseline working in english
+fully working baseline working in arabic
 
+next steps
 
+either focus on models side or focus on software side
+
+things to do:
+	fix the issue with the interruption. when u interrupt, it should hear the actual words that u interrupted with 
+	add agentic functionalities
+		memory
+		rag
+		tooling
+	make it work with an api or something so that i can use the script from my laptop and compute on the pc
 
 
 things to think about implementing:
