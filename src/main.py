@@ -2,6 +2,7 @@ import argparse
 
 from pipeline import VoicePipeline
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -66,10 +67,9 @@ def main():
         max_new_tokens=ARGS.max_new_tokens
     )
     
-
     while True:
-        pipe.run() #add a method for the pipeline to save the audio files of the speaker and the output of the tts
-       
+        pipe.run()
+
 
 if __name__ == '__main__':
     global ARGS

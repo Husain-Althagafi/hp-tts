@@ -165,6 +165,7 @@ class VoicePipeline:
             return transcription, ""
 
         llmresponse = self.run_llm(transcription)
+        print(f'LLM response: {llmresponse}')
         response_audio = self.ttsmodel.synthesize(llmresponse)
 
         if self.ttsmodel.model_type != 'facebook':
@@ -173,8 +174,6 @@ class VoicePipeline:
             self.tts_play(llmresponse)
 
         self.save_run(src_audio, transcription, llmresponse, response_audio, output_path)
-
-        # return transcription, llmresponse, src_audio
 
 
 if __name__ == '__main__':

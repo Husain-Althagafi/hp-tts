@@ -48,4 +48,3 @@ class STTModel:
 if __name__ == '__main__':
     sttmodel = STTModel(language='ar')
     
-
