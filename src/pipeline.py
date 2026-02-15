@@ -1,8 +1,8 @@
 import sounddevice as sd
 import threading
-import numpy as np
-import tempfile
 import soundfile as sf
+import time as time
+import os
 
 from stt_model import STTModel
 from vad import build_vad, record_one_utterance
@@ -93,8 +93,7 @@ class VoicePipeline:
         return full_generation(self.llm, self.llm_tokenizer, text, self.device, self.max_new_tokens)
 
 
-    def stt(self):
-        audio = self.record()
+    def stt(self, audio):
         return self.sttmodel.transcribe(audio), audio
     
     
@@ -118,6 +117,8 @@ class VoicePipeline:
             sd.sleep(20)
 
         self.is_tts_playing.clear()
+
+        return audio
             
 
     def stream_tts(self, text):
@@ -143,62 +144,37 @@ class VoicePipeline:
         self.is_tts_playing.clear()
 
 
+    def save_run(self, original_audio, transcription, llm_response, response_audio, output_path):
+        
+        sf.write(output_path + '/src_audio.wav', original_audio, 16000)
+        sf.write(output_path + '/response_audio.wav', response_audio, self.ttsmodel.model_rate)
+
+        with open(output_path + '/outputs.txt', 'w', encoding='utf-8') as f:
+            f.write(f'Transcription: {transcription}')
+            f.write(f'LLM Response: {llm_response}')
+
+
     def run(self):
-        transcription, sttaudio = self.stt()
+        save_time = time.time()
+        output_path = f'./outputs/runs/{save_time}'
+        os.makedirs(output_path, exist_ok=True)
+
+        audio = self.record()
+        transcription, src_audio = self.stt(audio)
         if transcription.lower().strip() == "exit":
             return transcription, ""
 
         llmresponse = self.run_llm(transcription)
+        response_audio = self.ttsmodel.synthesize(llmresponse)
 
         if self.ttsmodel.model_type != 'facebook':
             self.stream_tts(llmresponse)
         else:
             self.tts_play(llmresponse)
 
-        return transcription, llmresponse, sttaudio
-    
+        self.save_run(src_audio, transcription, llmresponse, response_audio, output_path)
 
-    def run_turn_from_gradio_audio(self, mic_audio):
-        """
-        mic_audio is usually (sample_rate, np.ndarray) from gr.Audio(type="numpy")
-        Returns: transcription, response, wav_path
-        """
-        if mic_audio is None:
-            return "", "", None
-
-        sr, audio = mic_audio
-
-        audio = np.asarray(audio, dtype=np.float32)
-        if audio.ndim > 1:
-            audio = audio[:, 0]  # mono
-
-        # Whisper expects 16k
-        audio_16k = self._linear_resample(audio, sr, 16000)
-
-        transcription = self.sttmodel.transcribe(audio_16k)
-        if transcription.lower().strip() == "exit":
-            return transcription, "", None
-
-        response = self.run_llm(transcription)
-
-        # Get TTS waveform (you already have ttsmodel.synthesize)
-        tts_wav = self.ttsmodel.synthesize(response).astype(np.float32)
-        tts_sr = self.ttsmodel.model_rate
-
-        # Write to temp wav for Gradio to play
-        outpath = tempfile.mkstemp(suffix=".wav")
-        sf.write(outpath, tts_wav, tts_sr)
-
-        return transcription, response, outpath
-        
-
-    def _linear_resample(audio: np.ndarray, sr_in: int, sr_out: int) -> np.ndarray:
-        if sr_in == sr_out:
-            return audio.astype(np.float32)
-        x_old = np.linspace(0.0, 1.0, num=len(audio), endpoint=False)
-        n_new = int(len(audio) * (sr_out / sr_in))
-        x_new = np.linspace(0.0, 1.0, num=n_new, endpoint=False)
-        return np.interp(x_new, x_old, audio).astype(np.float32)
+        # return transcription, llmresponse, src_audio
 
 
 if __name__ == '__main__':

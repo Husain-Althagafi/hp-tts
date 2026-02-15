@@ -13,7 +13,7 @@ def use_chat_template(tokenizer, prompt:str = 'Hi, I like cats'):
     messages = [
         {
             'role': 'system',
-            'content': "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."
+            'content': "You are Qwen, created by Alibaba Cloud. You are a helpful assistant. Respond in the same language as the user please."
         },
         {
             'role': 'user',

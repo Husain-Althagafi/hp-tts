@@ -68,9 +68,8 @@ def main():
     
 
     while True:
-       trancription, llmresponse, sttaudio = pipe.run() #add a method for the pipeline to save the audio files of the speaker and the output of the tts
-       print(trancription, llmresponse)
-
+        pipe.run() #add a method for the pipeline to save the audio files of the speaker and the output of the tts
+       
 
 if __name__ == '__main__':
     global ARGS

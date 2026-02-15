@@ -8,7 +8,7 @@ class STTModel:
             self.processor = WhisperProcessor.from_pretrained(model_name)
 
             self.generator = WhisperForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float32).to(self.device)
-            self.generator.config.forced_decoder_ids = self.processor.get_decoder_prompt_ids(language=language, task=task)
+            self.generator.config.language = self.processor.get_decoder_prompt_ids(language=language, task=task)
             self.generator.eval()
 
     
