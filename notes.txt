@@ -64,3 +64,15 @@ what i did so far
 
 
 whisper large fixed a bunch of issues instantly when i started using it with the generate kwargs. w rizz
+
+
+current status
+
+english baseline and arabic baseline complete is decent so can move away from pipeline focus and now focus on the specific models
+
+- evaluation script needs to be made
+- then look into models
+- prioritize accuracy then move onto looking into how to optimize latency
+
+
+look inot webrtc	

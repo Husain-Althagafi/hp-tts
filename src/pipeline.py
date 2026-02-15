@@ -4,11 +4,11 @@ import soundfile as sf
 import time as time
 import os
 
-from stt_model import STTModel
-from vad import build_vad, record_one_utterance
-from llm_responder import build_llm_and_tokenizer, use_chat_template, full_generation
-from tts_model import TTSModel
-from barge_in import start_barge_in_listener
+from src.stt_model import STTModel
+from src.vad import build_vad, record_one_utterance
+from src.llm_responder import build_llm_and_tokenizer, use_chat_template, full_generation
+from src.tts_model import TTSModel
+from src.barge_in import start_barge_in_listener
 
 
 class VoicePipeline:

@@ -7,8 +7,8 @@ import sounddevice as sd
 import time
 from transformers import AutoTokenizer, VitsModel
 import torch
-from sample_texts import arabic_tts_test_sentences
-from tts_pipeline import normalize_nums
+from src.sample_texts import arabic_tts_test_sentences
+from src.tts_pipeline import normalize_nums
 
 class TTSModel:
     def __init__(self, model_name:str = 'kokoro', device='cuda'):

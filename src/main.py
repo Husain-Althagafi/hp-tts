@@ -1,6 +1,6 @@
 import argparse
 
-from pipeline import VoicePipeline
+from src.pipeline import VoicePipeline
 
 
 def parse_args():
