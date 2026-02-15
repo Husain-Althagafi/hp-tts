@@ -28,12 +28,11 @@ class VoicePipeline:
         self.frame_ms = frame_ms
         self.max_new_tokens = max_new_tokens
 
-        if language == 'ar':
+        if language == 'arabic':
             tts = 'facebook/mms-tts-ara'
             stt = 'C:/Users/husain_althagafi/work/storage/whisper-large-v3'
         
-        elif language == 'en':
-            self.language = 'english'
+        elif language == 'english':
             tts = 'kokoro'
             stt = 'C:/Users/husain_althagafi/work/storage/whisper-large-v3'
 

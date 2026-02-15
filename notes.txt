@@ -60,3 +60,7 @@ what i did so far
 - made the pipeline implementation for the script start -> vad -> stt -> llm -> tts -> repeat
 - english baseline with api for llm and local model for tts and stt with transformers inference engine for whisper and idk what for kokoro
 - vibe coded the sounddevice logic and the threading logic to add interruption functionality during tts
+
+
+
+whisper large fixed a bunch of issues instantly when i started using it with the generate kwargs. w rizz
