@@ -6,6 +6,8 @@ import argparse
 from src.sample_texts import english_test_set, arabic_test_set
 from src.llm_responder import build_llm_and_tokenizer, use_chat_template, full_generation
 from jiwer import cer
+from tqdm import tqdm
+from src.tts_pipeline import normalize_text 
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -41,28 +43,30 @@ if __name__ == '__main__':
     
     args = parse_args()
 
-    # data_path = os.path.join(f'{args.data_path}', args.pipe_language)
-    # print(data_path)
-
     stt = STTModel(language=args.pipe_language, model_name=MODELS['stt'])
     tts = TTSModel(model_name=MODELS[f'tts_{args.pipe_language}'])
-    # llm, llm_tokenizer = build_llm_and_tokenizer(args.llm)
 
     if args.pipe_language == 'english':
         evalset = english_test_set
     elif args.pipe_language == 'arabic':
         evalset = arabic_test_set
 
-    for sample in evalset:
+    total_score = 0.0
+    count = len(evalset)
+    for sample in tqdm(evalset):
         wav = tts.synthesize(sample['text'])
-        transcription = stt.transcribe(wav)
+        transcription = normalize_text(stt.transcribe(wav))
+        norm_text = normalize_text(sample['text'])
 
         score = cer(sample['text'], transcription)
         print(sample["id"])
-        print("Original:", sample["text"])
-        print("ASR Back:", transcription)
+        print(f"Original:   {sample["text"]}")
+        print(f'Normalized: {norm_text}')
+        print(f"ASR Back:   {transcription}")
         print("CER:", score)
         print("-" * 40)
+        total_score += score
 
+    print(f'Average cer score is: {total_score/count}')
 
 
