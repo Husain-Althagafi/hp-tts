@@ -47,14 +47,6 @@ things to think about implementing:
 
 
 
-
-
-
-
-
-
-
-
 what i did so far
 
 - made the pipeline implementation for the script start -> vad -> stt -> llm -> tts -> repeat
@@ -76,3 +68,11 @@ english baseline and arabic baseline complete is decent so can move away from pi
 
 
 look inot webrtc	
+
+
+
+
+boy sybauuuuuuuuuuuuu gooon 
+
+
+https://github.com/huggingface/transformers/tree/main/examples/pytorch/speech-recognition#single-gpu-ctc
