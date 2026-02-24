@@ -23,11 +23,12 @@ def build_lora(model):
 
 
 def main():
-    model, processor = build_model()
+    model_name = 'C:/Users/husain_althagafi/work/storage/whisper-large-v3'
+    model, processor = build_model(model_name) 
     lora_model = build_lora(model)
     
     training_args = Seq2SeqTrainingArguments(
-            output_dir="../../outputs/finetunes/whisper-small-hi", 
+            output_dir=f"../../outputs/finetunes/{model_name.split('/')[-1]}", 
             per_device_train_batch_size=16,
             gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
             learning_rate=1e-5,
@@ -46,8 +47,19 @@ def main():
             load_best_model_at_end=True,
             metric_for_best_model="wer", 
             greater_is_better=False,
-            push_to_hub=True,
         )
+    
+    trainer = Seq2SeqTrainer(
+        model=lora_model,
+        args=training_args,
+        train_dataset=None,  # Replace with your training dataset
+        eval_dataset=None,   # Replace with your evaluation dataset
+        data_collator=None,  # Replace with your data collator if needed
+        compute_metrics=None,  # Replace with your metric computation function if needed
+        tokenizer=processor.feature_extractor,  # Use the feature extractor as the tokenizer
+    )
+
+    trainer.train()
 
 
 if __name__ == '__main__':
