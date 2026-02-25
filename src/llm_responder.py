@@ -1,6 +1,6 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import google.genai as genai
-
+from langchain.llms import HuggingFacePipeline
 
 def build_llm_and_tokenizer(model_name:str = 'Qwen2.5-7B-Instruct'):
     if model_name == 'api':
@@ -42,3 +42,14 @@ def full_generation(model, tokenizer, text, device, max_new_tokens):
     response = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0]
     return response
 
+
+def build_agent(model_name:str = 'C:/Users/husain_althagafi/work/storage/Qwen2.5-7B-Instruct', device:str = 'cuda'):
+    model, tokenizer = build_llm_and_tokenizer(model_name)
+    pipe = pipeline(
+        'text-generation',
+        model=model,
+        tokenizer=tokenizer,
+        device=device
+    )
+
+    return HuggingFacePipeline(pipeline=pipe)

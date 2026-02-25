@@ -30,11 +30,11 @@ class VoicePipeline:
 
         if language == 'arabic':
             tts = 'facebook/mms-tts-ara'
-            stt = 'C:/Users/husain_althagafi/work/storage/whisper-large-v3'
+            stt = 'D:/storage/whisper-large-v3'
         
         elif language == 'english':
             tts = 'kokoro'
-            stt = 'C:/Users/husain_althagafi/work/storage/whisper-large-v3'
+            stt = 'D:/storage/whisper-large-v3'
 
         self.vadmodel = build_vad(device=device)
         self.sttmodel = STTModel(model_name=stt, device=device, language=language)

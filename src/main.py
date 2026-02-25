@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument(
         '--llm',
         type=str,
-        default='C:/Users/husain_althagafi/work/storage/Qwen2.5-7B-Instruct'
+        default='D:/storage/Qwen2.5-7B-Instruct'
     )
 
     # parser.add_argument(
@@ -52,6 +52,13 @@ def parse_args():
         '--language',
         type=str,
         default='en'
+    )
+
+    parser.add_argument(
+        '--lora_model',
+        type=str,
+        default=None
+        # D:/storage/my_model
     )
 
     return parser.parse_args()
