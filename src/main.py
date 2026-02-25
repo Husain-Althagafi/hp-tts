@@ -71,7 +71,8 @@ def main():
         language=ARGS.language,
         sampling_rate=ARGS.sampling_rate,
         frame_ms=ARGS.frame_ms,
-        max_new_tokens=ARGS.max_new_tokens
+        max_new_tokens=ARGS.max_new_tokens,
+        lora_model=args.lora_model
     )
     
     while True:

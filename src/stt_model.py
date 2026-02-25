@@ -1,18 +1,17 @@
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import torch
+from peft import PeftModel
 
 class STTModel:
-    def __init__(self, language:str, model_name:str = 'openai/whisper-small', task:str = 'transcribe', device:str = 'cuda',):
+    def __init__(self, language:str, model_name:str = 'openai/whisper-small', task:str = 'transcribe', device:str = 'cuda', lora_model:str = None):
         self.device = device
         self.large = True if 'whisper-large' in model_name else False
         if 'whisper-large' in model_name:
-            # self.processor = WhisperProcessor.from_pretrained(model_name)
-            # self.generator.config.language = self.processor.get_decoder_prompt_ids(language=language, task=task)
-            # self.generator = WhisperForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float32).to(self.device)
-
             self.processor = AutoProcessor.from_pretrained(model_name)
             self.generator = AutoModelForSpeechSeq2Seq.from_pretrained(model_name, dtype=torch.float32, low_cpu_mem_usage=True, attn_implementation="sdpa").to(self.device)
+            if lora_model is not None:
+                self.generator = PeftModel.from_pretrained(self.generator, lora_model).to(self.device)
             self.generator.eval()
 
             self.pipe = pipeline(

@@ -3,6 +3,7 @@ import threading
 import soundfile as sf
 import time as time
 import os
+from peft import PeftModel
 
 from src.stt_model import STTModel
 from src.vad import build_vad, record_one_utterance
@@ -20,6 +21,7 @@ class VoicePipeline:
             sampling_rate=16000,
             frame_ms=32,
             max_new_tokens=256,
+            lora_model=None
     ):
         
         self.device = device
@@ -37,7 +39,7 @@ class VoicePipeline:
             stt = 'D:/storage/whisper-large-v3'
 
         self.vadmodel = build_vad(device=device)
-        self.sttmodel = STTModel(model_name=stt, device=device, language=language)
+        self.sttmodel = STTModel(model_name=stt, device=device, language=language, lora_model=lora_model)
         self.ttsmodel = TTSModel(model_name=tts, device=device)
 
         if llm != 'api':
